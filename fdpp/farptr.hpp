@@ -419,6 +419,8 @@ protected:
         far_s f = lookup_far_st(ptr);
         if (!f.seg && !f.off)
             f = lookup_far(&g_farhlp2, ptr);
+        if (!f.seg && !f.off)
+            f = _lookup_far(ptr);
         _assert(f.seg || f.off);
         fp = _MK_F(FarPtr<uint8_t>, f) + F();
         return fp;
