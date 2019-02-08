@@ -93,10 +93,10 @@ public:
         return (T0*)resolve_segoff(ptr);
     }
 
-    wrp_type get_wrp() {
-        return wrp_type(get_buf(), get_far());
+    wrp_type& get_wrp() {
+        return *new wrp_type(get_buf(), get_far());
     }
-    wrp_type operator [](int idx) {
+    wrp_type& operator [](int idx) {
         return FarPtrBase<T>(*this + idx).get_wrp();
     }
 
@@ -127,6 +127,9 @@ public:
     T* get_ptr() { return (T*)resolve_segoff(ptr); }
     void *get_buf() { return (void*)resolve_segoff(ptr); }
     explicit operator uint32_t () const { return get_fp32(); }
+    template <typename T1 = T,
+        typename std::enable_if<!std::is_void<T1>::value>::type* = nullptr>
+    T1& get_obj() { return *(T1 *)resolve_segoff(ptr); }
 };
 
 class ObjIf {
@@ -259,37 +262,41 @@ public:
  */
 template<typename T>
 class SymWrp : public T {
-    far_s fptr;
 public:
-    SymWrp(void *ptr, far_s f) : fptr(f) {
+    SymWrp(void *ptr, far_s f) {
         std::memcpy((T *)this, ptr, sizeof(T));
+        _store_far(this, f);
     }
-    ~SymWrp() { std::memcpy(resolve_segoff(fptr), (T *)this, sizeof(T)); }
+    ~SymWrp() {
+        std::memcpy(resolve_segoff(_lookup_far(this)), (T *)this, sizeof(T));
+    }
     SymWrp(const SymWrp&) = delete;
     SymWrp<T>& operator =(T& f) { *(T *)this = f; return *this; }
-    FarPtr<T> operator &() const { return _MK_F(FarPtr<T>, fptr); }
+    FarPtr<T> operator &() const { return _MK_F(FarPtr<T>, _lookup_far(this)); }
 };
 
 template<typename T>
 class SymWrp2 {
     /* remove const or default ctor will be deleted */
     _RC(T) sym;
-    far_s fptr;
 public:
-    SymWrp2(void *ptr, far_s f) : fptr(f) {
+    SymWrp2(void *ptr, far_s f) {
         std::memcpy(&sym, ptr, sizeof(T));
+        _store_far(this, f);
     }
-    ~SymWrp2() { std::memcpy(resolve_segoff(fptr), &sym, sizeof(T)); }
+    ~SymWrp2() {
+        std::memcpy(resolve_segoff(_lookup_far(this)), &sym, sizeof(T));
+    }
     SymWrp2(const SymWrp2&) = delete;
     SymWrp2<T>& operator =(const T& f) { sym = f; return *this; }
-    FarPtr<T> operator &() const { return _MK_F(FarPtr<T>, fptr); }
+    FarPtr<T> operator &() const { return _MK_F(FarPtr<T>, _lookup_far(this)); }
     operator T &() { return sym; }
     /* for fmemcpy() etc that need const void* */
     template <typename T1 = T,
         typename std::enable_if<_P(T1) &&
         !std::is_void<_RP(T1)>::value>::type* = nullptr>
     operator FarPtr<const void> () const {
-        return _MK_F(FarPtr<const void>, fptr);
+        return _MK_F(FarPtr<const void>, _lookup_far(this));
     }
 };
 
@@ -314,8 +321,8 @@ class AsmSym {
     FarPtr<T> sym;
 
 public:
-    using sym_type = typename WrpType<T>::type;
-    sym_type get_sym() { return sym.get_wrp(); }
+    using sym_type = typename WrpType<T>::ref_type;
+    sym_type& get_sym() { return sym.get_wrp(); }
     AsmRef<T> get_addr() { return AsmRef<T>(&sym); }
 
     /* everyone with get_ref() method should have no copy ctor */
