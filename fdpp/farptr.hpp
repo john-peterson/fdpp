@@ -20,7 +20,6 @@
 #define FARPTR_HPP
 
 #include <type_traits>
-#include <new>
 #include <memory>
 #include <cstring>
 #include <unordered_set>
@@ -94,12 +93,10 @@ public:
         return (T0*)resolve_segoff(ptr);
     }
 
-    wrp_type& get_wrp() {
-        wrp_type *s = new(get_buf()) wrp_type;
-        _store_far(s, get_far());
-        return *s;
+    wrp_type get_wrp() {
+        return wrp_type(get_buf(), get_far());
     }
-    wrp_type& operator [](int idx) {
+    wrp_type operator [](int idx) {
         return FarPtrBase<T>(*this + idx).get_wrp();
     }
 
@@ -262,30 +259,37 @@ public:
  */
 template<typename T>
 class SymWrp : public T {
+    far_s fptr;
 public:
-    SymWrp() = default;
+    SymWrp(void *ptr, far_s f) : fptr(f) {
+        std::memcpy((T *)this, ptr, sizeof(T));
+    }
+    ~SymWrp() { std::memcpy(resolve_segoff(fptr), (T *)this, sizeof(T)); }
     SymWrp(const SymWrp&) = delete;
     SymWrp<T>& operator =(T& f) { *(T *)this = f; return *this; }
-    FarPtr<T> operator &() const { return _MK_F(FarPtr<T>, _lookup_far(this)); }
+    FarPtr<T> operator &() const { return _MK_F(FarPtr<T>, fptr); }
 };
 
 template<typename T>
 class SymWrp2 {
     /* remove const or default ctor will be deleted */
     _RC(T) sym;
-
+    far_s fptr;
 public:
-    SymWrp2() = default;
+    SymWrp2(void *ptr, far_s f) : fptr(f) {
+        std::memcpy(&sym, ptr, sizeof(T));
+    }
+    ~SymWrp2() { std::memcpy(resolve_segoff(fptr), &sym, sizeof(T)); }
     SymWrp2(const SymWrp2&) = delete;
     SymWrp2<T>& operator =(const T& f) { sym = f; return *this; }
-    FarPtr<T> operator &() const { return _MK_F(FarPtr<T>, _lookup_far(this)); }
+    FarPtr<T> operator &() const { return _MK_F(FarPtr<T>, fptr); }
     operator T &() { return sym; }
     /* for fmemcpy() etc that need const void* */
     template <typename T1 = T,
         typename std::enable_if<_P(T1) &&
         !std::is_void<_RP(T1)>::value>::type* = nullptr>
     operator FarPtr<const void> () const {
-        return _MK_F(FarPtr<const void>, _lookup_far(this));
+        return _MK_F(FarPtr<const void>, fptr);
     }
 };
 
@@ -310,7 +314,7 @@ class AsmSym {
     FarPtr<T> sym;
 
 public:
-    using sym_type = typename WrpType<T>::ref_type;
+    using sym_type = typename WrpType<T>::type;
     sym_type get_sym() { return sym.get_wrp(); }
     AsmRef<T> get_addr() { return AsmRef<T>(&sym); }
 
@@ -518,7 +522,7 @@ class SymMemb : public T, public MembBase<T, F> {
 public:
     SymMemb() = default;
     SymMemb(const SymMemb&) = delete;
-    SymWrp<T>& operator =(T& f) { *(T *)this = f; return *(SymWrp<T> *)this; }
+    T& operator =(T& f) { *(T *)this = f; return *(T *)this; }
     FarPtr<T> operator &() const { return this->lookup_sym(); }
 };
 
