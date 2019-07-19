@@ -23,7 +23,8 @@
 #include <algorithm>
 #include "objhlp.hpp"
 
-static std::unordered_map<const void *, std::unordered_set<ObjRef *> > omap;
+typedef std::unordered_map<const void *, std::unordered_set<ObjRef *> > omap_t;
+static omap_t omap;
 
 bool track_owner(const void *owner, ObjRef *obj)
 {
@@ -41,8 +42,20 @@ std::unordered_set<ObjRef *> get_owned_list(const void *owner)
     return ret;
 }
 
+bool objhlp_untrack(ObjRef *obj)
+{
+    bool ret = false;
+    std::for_each(omap.begin(), omap.end(), [obj, &ret]
+            (omap_t::value_type& rmap) {
+        if (rmap.second.erase(obj) > 0)
+            ret = true;
+    });
+    return ret;
+}
+
 typedef std::unordered_map<const void *, sh_ref> refmap;
-static std::unordered_map<const void *, refmap> shmap;
+typedef std::unordered_map<const void *, refmap> shmap_t;
+static shmap_t shmap;
 
 bool track_owner_sh(const void *owner, const void *loc, sh_ref obj)
 {

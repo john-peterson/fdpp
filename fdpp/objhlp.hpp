@@ -30,6 +30,7 @@ public:
 
 bool track_owner(const void *owner, ObjRef *obj);
 std::unordered_set<ObjRef *> get_owned_list(const void *owner);
+bool objhlp_untrack(ObjRef *obj);
 
 typedef std::shared_ptr<ObjRef> sh_ref;
 bool track_owner_sh(const void *owner, const void *loc, sh_ref obj);

@@ -85,6 +85,9 @@ class FarObj : public FarObjBase<T>, public ObjIf, public ObjRef {
     }
     void do_cp() { do_cp1(); own_cp(); }
     void RmObj() {
+        /* make sure we are not orphaned */
+        bool orphaned = objhlp_untrack(this);
+        _assert(!orphaned);
         if (!have_obj)
             return;
         do_cp();
@@ -151,18 +154,15 @@ public:
 #define __MK_NEAR(n) __obj_##n.get_near()
 #define __MK_NEAR2(n, t) t(__obj_##n.get_near().off())
 #define _MK_FAR_STR(n, o) FarObj<_R(o)> __obj_##n(o, strlen(o) + 1, true, NM)
-#define MK_FAR_STR_OBJ(p, m, o) do { \
-    std::shared_ptr<ObjRef> _sh = \
-        std::make_shared<FarObj<_R(o)>>(o, strlen(o) + 1, true, NM); \
-    track_owner_sh(&p, &p.m, _sh); \
-    p.m = FarPtrBase<_RC(o)> (((FarObj<_R(o)> *)_sh.get())->get_obj()); \
-} while(0)
+#define MK_FAR_STR_OBJ_SCP(p, m, o) \
+    FarObj<_R(o)> _obj(o, strlen(o) + 1, true, NM); \
+    track_owner(&p, &_obj); \
+    p.m = FarPtrBase<_RC(o)>(_obj.get_obj())
 #define _MK_FAR_SZ(n, o, sz) FarObj<_R(o)> __obj_##n(o, sz, false, NM)
-#define MK_FAR_SZ_OBJ(p, m, o, sz) do { \
-    std::shared_ptr<ObjRef> _sh = std::make_shared<FarObj<_R(o)>>(o, sz, false, NM); \
-    track_owner_sh(&p, &p.m, _sh); \
-    p.m = FarPtrBase<_RC(o)> (((FarObj<_R(o)> *)_sh.get())->get_obj()); \
-} while(0)
+#define MK_FAR_SZ_OBJ_SCP(p, m, o, sz) \
+    FarObj<_R(o)> _obj(o, sz, false, NM); \
+    track_owner(&p, &_obj); \
+    p.m = FarPtrBase<_RC(o)>(_obj.get_obj())
 #define MK_FAR_SCP(o) FarPtr<_RR(decltype(o))>(FarObj<_RR(decltype(o))>(o, NM).get_obj())
 #define MK_FAR_SZ_SCP(o, sz) FarPtr<_RC(o)>(FarObj<_R(o)>(o, sz, false, NM).get_obj())
 
