@@ -62,10 +62,11 @@ ifeq ($(USE_UBSAN),1)
 DBGFLAGS += -fsanitize=undefined -fno-sanitize=alignment,function,vptr
 endif
 
-CXXFLAGS = $(TARGETOPT) $(CPPFLAGS) $(WFLAGS) $(DBGFLAGS) $(TARGETOPT_XTRA)
+CXXFLAGS = $(TARGETOPT) $(CPPFLAGS) $(WFLAGS) $(DBGFLAGS) $(TARGETOPT_XTRA) \
+ -flto=auto -ffat-lto-objects
 CFLAGS = -Wall $(DBGFLAGS)
 CLCFLAGS = -c -fpic -Wall $(DBGFLAGS) -xc++
-LDFLAGS = -shared -Wl,--build-id=sha1
+LDFLAGS = -shared -Wl,--build-id=sha1 -flto=auto
 
 ifeq ($(XFAT),32)
 CPPFLAGS += -DWITHFAT32
