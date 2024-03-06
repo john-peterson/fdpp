@@ -35,7 +35,7 @@ GEN_EXT = fdpp.pc
 TG = $(shell pkg-config --variable=binary thunk_gen)
 ifeq ($(TG),)
 ifeq ($(filter clean,$(MAKECMDGOALS)),)
-$(error thunk_gen not installed)
+$(warning thunk_gen not installed)
 endif
 endif
 TGS = $(shell pkg-config --variable=tgscript thunk_gen)
@@ -76,7 +76,7 @@ clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C loader clean
 	-$(RM) .tstamp *.map $(TARGET).elf *.inc \
-		*.o $(GEN_CC) $(FDPPDEVL) $(FDPPLIB) *.tmp $(GEN_HEADERS) \
+		*.o $(GEN_CC) $(FDPPDEVL) $(FDPPLIB) \
 		$(LDRDEVL) $(LDRLIB) $(GEN_HEADERS_FD) \
 		*.pc *.so *.elf
 

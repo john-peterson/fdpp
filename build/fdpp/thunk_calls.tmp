@@ -1,0 +1,14 @@
+0     	unsigned char ASMCFUNC SEGM(HMA_TEXT) DosUpChar(unsigned char ch);
+1     	UWORD ASMCFUNC SEGM(HMA_TEXT) syscall_MUX14(iregs FAR * regs);
+2     	WORD ASMCFUNC SEGM(HMA_TEXT) FAR clk_driver(request FAR * rp);
+3     	COUNT ASMCFUNC SEGM(HMA_TEXT) FAR blk_driver(request FAR * rp);
+4     	VOID ASMCFUNC SEGM(INIT_TEXT) FreeDOSmain(void);
+5     	VOID ASMCFUNC SEGM(HMA_TEXT) int21_syscall(iregs FAR * irp);
+6     	VOID ASMCFUNC SEGM(HMA_TEXT) int21_service(iregs FAR * r);
+7     	VOID ASMCFUNC SEGM(HMA_TEXT) int2526_handler(WORD mode,struct int25regs FAR * r);
+8     	VOID ASMCFUNC SEGM(HMA_TEXT) P_0(const struct config FAR *Config);
+9     	VOID ASMCFUNC SEGM(HMA_TEXT) P_0_exit(void);
+10    	VOID ASMCFUNC SEGM(HMA_TEXT) P_0_bad(void);
+11    	VOID ASMCFUNC SEGM(HMA_TEXT) int2F_12_handler(struct int2f12regs FAR * r);
+12    	VOID ASMCFUNC SEGM(HMA_TEXT) int2F_08_handler(iregs FAR * regs);
+13    	VOID ASMCFUNC SEGM(HMA_TEXT) int2F_10_handler(iregs FAR * regs);
