@@ -20,6 +20,7 @@ else
 endif
 	$(BISON) -d $^
 
+LEX = flex
 lex.yy.c: $(srcdir)/thunk_gen.l
 	$(LEX) $^
 
